@@ -1,11 +1,14 @@
 from typing import Protocol, Any, Dict, Optional
 from uuid import UUID
 from app.models.postgre import Submission
-from app.models.mongo import SubmissionDocument
+
 
 class SubmissionsPGRepo(Protocol):
     async def get_by_uuid(self, uuid: UUID) -> Optional["Submission"]: ...
-    async def create(self, *, title: str, status: str, language: str, mongo_id: str) -> "Submission": ...
+    async def create(
+        self, *, title: str, status: str, language: str, mongo_id: str
+    ) -> "Submission": ...
+
 
 class SubmissionsMongoRepo(Protocol):
     async def get(self, mongo_id: str) -> Optional[Dict[str, Any]]: ...

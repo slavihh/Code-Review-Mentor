@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from uuid import UUID
 from bson import ObjectId
 from fastapi import HTTPException
@@ -6,6 +6,7 @@ from openai import AsyncOpenAI
 
 from app.schemas.submissions import SubmissionOut, SubmissionPayload
 from app.repositories.protocols import SubmissionsPGRepo, SubmissionsMongoRepo
+
 
 def _coerce_objid(x):
     if isinstance(x, ObjectId):
@@ -16,6 +17,7 @@ def _coerce_objid(x):
         return {k: _coerce_objid(v) for k, v in x.items()}
     return x
 
+
 TECHNICAL_PERSONA = (
     "You are a senior backend engineer and code reviewer. "
     "Be concise, specific, and pragmatic. "
@@ -24,8 +26,11 @@ TECHNICAL_PERSONA = (
 )
 OPENAI_MODEL = "gpt-4o-mini"
 
+
 class SubmissionsService:
-    def __init__(self, pg: SubmissionsPGRepo, mg: SubmissionsMongoRepo, ai: AsyncOpenAI):
+    def __init__(
+        self, pg: SubmissionsPGRepo, mg: SubmissionsMongoRepo, ai: AsyncOpenAI
+    ):
         self.pg = pg
         self.mg = mg
         self.ai = ai
@@ -70,7 +75,10 @@ class SubmissionsService:
             temperature=0.2,
             messages=[
                 {"role": "system", "content": TECHNICAL_PERSONA},
-                {"role": "user", "content": f"{prompt_text}\n\n{user_input.get('content')}"},
+                {
+                    "role": "user",
+                    "content": f"{prompt_text}\n\n{user_input.get('content')}",
+                },
             ],
         )
         ai_text = chat.choices[0].message.content

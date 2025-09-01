@@ -5,7 +5,6 @@ from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.db import Base, DATABASE_URL
-import app.models.postgre
 
 config = context.config
 if config.config_file_name is not None:
