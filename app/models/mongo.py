@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 from bson import ObjectId
 
+
 class PyObjectId(ObjectId):
     @classmethod
     def __get_validators__(cls):
@@ -13,9 +14,11 @@ class PyObjectId(ObjectId):
             raise ValueError("Invalid ObjectId")
         return ObjectId(v)
 
+
 class FeedbackChunk(BaseModel):
     text: str
     timestamp: Optional[float] = None
+
 
 class SubmissionDocument(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id")

@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from app.core.db import Base, engine
 from app.api.submissions import router as submissions_router
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -16,6 +17,7 @@ async def lifespan(app: FastAPI):
     finally:
         # Shutdown
         await engine.dispose()
+
 
 app = FastAPI(
     lifespan=lifespan,
@@ -33,6 +35,7 @@ app.add_middleware(
 )
 
 app.include_router(submissions_router)
+
 
 @app.get("/")
 async def root():
