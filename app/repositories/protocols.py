@@ -1,4 +1,4 @@
-from typing import Protocol, Any, Dict, Optional
+from typing import Protocol, Any, Optional, Dict
 from uuid import UUID
 from app.models.postgre import Submission
 
@@ -12,4 +12,4 @@ class SubmissionsPGRepo(Protocol):
 
 class SubmissionsMongoRepo(Protocol):
     async def get(self, mongo_id: str) -> Optional[Dict[str, Any]]: ...
-    async def insert(self, user_input: str, ai_text: str) -> str: ...
+    async def insert(self, user_input: Dict[str, Any], ai_text: str | None) -> str: ...

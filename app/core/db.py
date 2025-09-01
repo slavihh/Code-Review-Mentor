@@ -1,30 +1,43 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-from motor.motor_asyncio import AsyncIOMotorClient
+from __future__ import annotations
+
+from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import (
+    async_sessionmaker,
+    AsyncSession,
+    AsyncEngine,
+    create_async_engine,
+)
+from sqlalchemy.orm import DeclarativeBase
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 import os
 
-# -------------------------------
-# PostgreSQL (async SQLAlchemy)
-# -------------------------------
-DATABASE_URL = os.getenv(
+DATABASE_URL: str = os.getenv(
     "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@db:5432/codereview"
 )
 
-engine = create_async_engine(DATABASE_URL, echo=True, future=True)
-SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
-Base = declarative_base()
 
-MONGO_URL = os.getenv("MONGO_URL", "mongodb://mongo:27017")
-MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "codereview")
+engine: AsyncEngine = create_async_engine(DATABASE_URL, echo=True, future=True)
 
-mongo_client = AsyncIOMotorClient(MONGO_URL)
-mongo_db = mongo_client[MONGO_DB_NAME]
+SessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
+    bind=engine, expire_on_commit=False
+)
 
 
-async def get_db():
+class Base(DeclarativeBase):
+    pass
+
+
+MONGO_URL: str = os.getenv("MONGO_URL", "mongodb://mongo:27017")
+MONGO_DB_NAME: str = os.getenv("MONGO_DB_NAME", "codereview")
+
+mongo_client: AsyncIOMotorClient = AsyncIOMotorClient(MONGO_URL)
+mongo_db: AsyncIOMotorDatabase = mongo_client[MONGO_DB_NAME]
+
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
         yield session
 
 
-async def get_mongo_db():
+async def get_mongo_db() -> AsyncGenerator[AsyncIOMotorDatabase, None]:
     yield mongo_db

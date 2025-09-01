@@ -1,10 +1,10 @@
 from typing import Any, Dict, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 
 
 class SubmissionsMongoRepo:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncIOMotorDatabase):
         self.db = db
 
     async def get(self, mongo_id: str) -> Optional[Dict[str, Any]]:
@@ -12,7 +12,7 @@ class SubmissionsMongoRepo:
 
         return self.serialize_mongo(raw)
 
-    async def insert(self, user_input: Dict[str, Any], ai_text: str) -> str:
+    async def insert(self, user_input: dict[str, Any], ai_text: str | None) -> str:
         payload_for_response: Dict[str, Any] = {**user_input, "ai_response": ai_text}
         to_insert = dict(payload_for_response)
         ins = await self.db["submissions"].insert_one(to_insert)
