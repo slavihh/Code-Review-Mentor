@@ -8,7 +8,6 @@ from app.schemas.submissions import SubmissionOut, SubmissionPayload
 from app.repositories.protocols import SubmissionsPGRepo, SubmissionsMongoRepo
 
 def _coerce_objid(x):
-    from bson import ObjectId
     if isinstance(x, ObjectId):
         return str(x)
     if isinstance(x, list):
@@ -56,7 +55,6 @@ class SubmissionsService:
         )
 
     async def create(self, data) -> SubmissionOut:
-        # Build prompt (your new format)
         user_input = data.payload.model_dump()
         prompt_text = (
             f"Act as a senior backend engineer. "
@@ -76,9 +74,8 @@ class SubmissionsService:
             ],
         )
         ai_text = chat.choices[0].message.content
-
-        payload_for_response = {**user_input, "ai_response": ai_text}
-        mongo_id = await self.mg.insert(payload_for_response)
+        payload_for_response: Dict[str, Any] = {**user_input, "ai_response": ai_text}
+        mongo_id = await self.mg.insert(user_input, ai_text)
 
         sub = await self.pg.create(
             title=data.title,
