@@ -30,4 +30,4 @@ jobs:
       - name: Ruff - lint
         run: ruff check . --output-format=github
       - name: mypy
-        run: mypy --error-format=github
+        run: mypy --pretty --show-error-codes app tests
