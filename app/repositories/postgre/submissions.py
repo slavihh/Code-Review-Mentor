@@ -15,7 +15,7 @@ class SubmissionsPgRepo:
 
     async def find_all(self) -> Sequence["Submission"]:
         res = await self.db.execute(select(Submission))
-        return  res.scalars().all()
+        return res.scalars().all()
 
     async def create(
         self, *, title: str, status: str, language: str, mongo_id: str

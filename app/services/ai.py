@@ -8,19 +8,22 @@ import os
 from app.schemas.submissions import SubmissionCreate
 from app.schemas.ai import ReviewPayload
 
+
 class AI:
     TECHNICAL_PERSONA = (
-    "You are a senior backend engineer and code reviewer. "
-    "Be concise, specific, and pragmatic. "
-    "Return actionable bullet points. "
-    "When suggesting fixes, include minimal, correct code snippets."
+        "You are a senior backend engineer and code reviewer. "
+        "Be concise, specific, and pragmatic. "
+        "Return actionable bullet points. "
+        "When suggesting fixes, include minimal, correct code snippets."
     )
     OPENAI_MODEL = "gpt-4o-mini"
 
     def __init__(self, ai_client: AsyncOpenAI):
         self.ai_client = ai_client
 
-    def build_messages(self, data: SubmissionCreate | ReviewPayload) -> List[Union[ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam]]:
+    def build_messages(
+        self, data: SubmissionCreate | ReviewPayload
+    ) -> List[Union[ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam]]:
         prompt_text = (
             f"Act as a senior backend engineer. "
             f"Analyze this {data.language} code for backend issues. "
@@ -32,13 +35,21 @@ class AI:
         )
         code_input = data.payload.model_dump()
         if "content" not in code_input:
-            raise Exception('Missing code to review.')
-        messages: List[Union[ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam]] = [
-                cast(ChatCompletionSystemMessageParam, {"role": "system", "content": self.TECHNICAL_PERSONA}),
-                cast(ChatCompletionUserMessageParam, {
+            raise Exception("Missing code to review.")
+        messages: List[
+            Union[ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam]
+        ] = [
+            cast(
+                ChatCompletionSystemMessageParam,
+                {"role": "system", "content": self.TECHNICAL_PERSONA},
+            ),
+            cast(
+                ChatCompletionUserMessageParam,
+                {
                     "role": "user",
                     "content": f"{prompt_text}\n\n{code_input['content']}",
-                }),
+                },
+            ),
         ]
 
         return messages
@@ -51,12 +62,12 @@ class AI:
         )
         return chat.choices[0].message.content
 
-    async def stream_feedback(self, data: SubmissionCreate | ReviewPayload) -> AsyncGenerator[bytes, None]:
+    async def stream_feedback(
+        self, data: SubmissionCreate | ReviewPayload
+    ) -> AsyncGenerator[bytes, None]:
         messages = self.build_messages(data)
         stream = await self.ai_client.chat.completions.create(
-            model=self.OPENAI_MODEL,
-            messages=messages,
-            stream=True
+            model=self.OPENAI_MODEL, messages=messages, stream=True
         )
 
         async for chunk in stream:
@@ -64,6 +75,7 @@ class AI:
                 delta = choice.delta.content
                 if delta:
                     yield delta.encode("utf-8")
+
 
 def get_ai() -> AI:
     api_key = os.getenv("OPENAI_API_KEY")

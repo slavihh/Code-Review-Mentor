@@ -3,7 +3,11 @@ from uuid import UUID
 from bson import ObjectId
 from fastapi import HTTPException
 
-from app.schemas.submissions import SubmissionWithPayloadOut, CodePayload, SubmissionCreate
+from app.schemas.submissions import (
+    SubmissionWithPayloadOut,
+    CodePayload,
+    SubmissionCreate,
+)
 from app.repositories.protocols import SubmissionsPGRepo, SubmissionsMongoRepo
 from app.services.ai import AI as AIService
 
@@ -19,9 +23,7 @@ def _coerce_objid(x):
 
 
 class SubmissionsService:
-    def __init__(
-        self, pg: SubmissionsPGRepo, mg: SubmissionsMongoRepo, ai: AIService
-    ):
+    def __init__(self, pg: SubmissionsPGRepo, mg: SubmissionsMongoRepo, ai: AIService):
         self.pg = pg
         self.mg = mg
         self.ai = ai
@@ -49,7 +51,7 @@ class SubmissionsService:
             updated_at=sub.updated_at,
             payload=CodePayload(**payload_doc) if payload_doc else None,
         )
-    
+
     async def getAll(self) -> List[SubmissionWithPayloadOut]:
         pg_submissions = await self.pg.find_all()
         result = []
@@ -62,17 +64,16 @@ class SubmissionsService:
                 language=sub.language,
                 mongo_id=sub.mongo_id,
                 created_at=sub.created_at,
-                updated_at=sub.updated_at
+                updated_at=sub.updated_at,
             )
             result.append(submission)
         return result
-                
 
     async def create(self, data: SubmissionCreate) -> SubmissionWithPayloadOut:
         user_input = data.payload.model_dump()
         ai_text = await self.ai.get_feedback(data=data)
         if not ai_text:
-            ai_text = ''
+            ai_text = ""
         payload_for_response: Dict[str, Any] = {**user_input, "ai_response": ai_text}
         mongo_id = await self.mg.insert(user_input, ai_text)
 

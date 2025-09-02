@@ -9,7 +9,7 @@ class CodePayload(BaseModel):
     content: Any | None = None
     ai_response: Optional[str] = None
 
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class SubmissionCreate(BaseModel):
@@ -37,6 +37,7 @@ class SubmissionWithPayloadOut(BaseModel):
     payload: Optional[CodePayload] = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class SubmissionOut(BaseModel):
     id: int

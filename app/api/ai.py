@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from app.services.ai import get_ai, AI as AIService

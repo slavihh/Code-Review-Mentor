@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 from app.schemas.submissions import (
     SubmissionCreate,
     SubmissionWithPayloadOut,
-    SubmissionOut
+    SubmissionOut,
 )
 from app.core.db import get_mongo_db, get_db
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +25,7 @@ def get_pg_repo(session: AsyncSession = Depends(get_db)) -> SubmissionsPgRepo:
 def get_mg_repo(db=Depends(get_mongo_db)) -> SubmissionsMongoRepo:
     return SubmissionsMongoRepo(db)
 
+
 def get_submissions_service(
     pg: SubmissionsPgRepo = Depends(get_pg_repo),
     mg: SubmissionsMongoRepo = Depends(get_mg_repo),
@@ -40,7 +41,9 @@ async def get_submission(
     return await service.get(uuid=uuid)
 
 
-@router.post("", response_model=SubmissionWithPayloadOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=SubmissionWithPayloadOut, status_code=status.HTTP_201_CREATED
+)
 async def create_submission(
     data: SubmissionCreate,
     service: SubmissionsService = Depends(get_submissions_service),
@@ -50,6 +53,6 @@ async def create_submission(
 
 @router.get("", response_model=List[SubmissionOut])
 async def get_submissions(
-    service: SubmissionsService = Depends(get_submissions_service)
+    service: SubmissionsService = Depends(get_submissions_service),
 ):
     return await service.getAll()

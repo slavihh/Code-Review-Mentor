@@ -6,6 +6,7 @@ from app.core.db import Base, engine
 from app.api.submissions import router as submissions_router
 from app.api.ai import router as ai_router
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -35,4 +36,3 @@ app.add_middleware(
 
 app.include_router(submissions_router)
 app.include_router(ai_router)
-

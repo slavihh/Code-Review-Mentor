@@ -4,6 +4,7 @@ from app.main import app
 
 from httpx import ASGITransport
 
+
 @pytest.mark.asyncio
 async def test_streaming_review():
     transport = ASGITransport(app=app)
