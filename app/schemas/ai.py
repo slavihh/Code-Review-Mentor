@@ -3,6 +3,6 @@ from pydantic import BaseModel
 from app.models.postgre import Language
 
 
-class Review(BaseModel):
+class ReviewPayload(BaseModel):
     language: Language
     payload: CodePayload

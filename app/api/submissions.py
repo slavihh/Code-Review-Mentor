@@ -1,7 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
-import os
-from openai import AsyncOpenAI
+from fastapi import APIRouter, Depends, status
 
 from app.schemas.submissions import (
     SubmissionCreate,

@@ -3,7 +3,7 @@ from uuid import UUID
 from bson import ObjectId
 from fastapi import HTTPException
 
-from app.schemas.submissions import SubmissionWithPayloadOut, SubmissionOut, CodePayload
+from app.schemas.submissions import SubmissionWithPayloadOut, CodePayload, SubmissionCreate
 from app.repositories.protocols import SubmissionsPGRepo, SubmissionsMongoRepo
 from app.services.ai import AI as AIService
 
@@ -54,7 +54,7 @@ class SubmissionsService:
         pg_submissions = await self.pg.find_all()
         result = []
         for sub in pg_submissions:
-            submission = SubmissionOut(
+            submission = SubmissionWithPayloadOut(
                 id=sub.id,
                 uuid=sub.uuid,
                 title=sub.title,
@@ -68,9 +68,11 @@ class SubmissionsService:
         return result
                 
 
-    async def create(self, data) -> SubmissionWithPayloadOut:
+    async def create(self, data: SubmissionCreate) -> SubmissionWithPayloadOut:
         user_input = data.payload.model_dump()
-        ai_text = await self.ai.get_feedback(data=data, code_input=user_input)
+        ai_text = await self.ai.get_feedback(data=data)
+        if not ai_text:
+            ai_text = ''
         payload_for_response: Dict[str, Any] = {**user_input, "ai_response": ai_text}
         mongo_id = await self.mg.insert(user_input, ai_text)
 

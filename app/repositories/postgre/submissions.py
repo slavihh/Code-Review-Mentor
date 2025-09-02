@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
@@ -13,7 +13,7 @@ class SubmissionsPgRepo:
         res = await self.db.execute(select(Submission).where(Submission.uuid == uuid))
         return res.scalars().first()
 
-    async def find_all(self) -> List["Submission"]:
+    async def find_all(self) -> Sequence["Submission"]:
         res = await self.db.execute(select(Submission))
         return  res.scalars().all()
 
