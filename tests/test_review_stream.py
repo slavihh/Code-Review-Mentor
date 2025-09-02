@@ -21,4 +21,4 @@ async def test_streaming_review():
                 chunks.append(chunk)
 
             full_output = "".join(chunks)
-            assert "End of review" in full_output or "Python" in full_output
+            assert "print(123)" in full_output or "Python" in full_output

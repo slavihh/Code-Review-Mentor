@@ -6,7 +6,7 @@ from app.models.postgre import Language
 
 
 class CodePayload(BaseModel):
-    content: Any | None = None
+    content: str= Field(min_length=30, max_length=500)
     ai_response: Optional[str] = None
 
     model_config = ConfigDict(extra="allow")
