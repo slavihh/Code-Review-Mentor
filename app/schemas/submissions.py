@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Any, Optional
+from typing import Optional
 from datetime import datetime
 from uuid import UUID
 from app.models.postgre import Language
