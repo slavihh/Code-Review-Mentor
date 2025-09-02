@@ -7,10 +7,16 @@ class SubmissionsMongoRepo:
     def __init__(self, db: AsyncIOMotorDatabase):
         self.db = db
 
-    async def get(self, mongo_id: str) -> Optional[Dict[str, Any]]:
+    async def find(self, mongo_id: str) -> Optional[Dict[str, Any]]:
         raw = await self.db["submissions"].find_one({"_id": ObjectId(mongo_id)})
 
         return self.serialize_mongo(raw)
+
+    async def find_all(self) -> Optional[Dict[str, Any]]:
+        submissions_dict = {}
+        async for doc in self.db["submissions"].find({}):
+            submissions_dict[str(doc["_id"])] = doc
+        return submissions_dict
 
     async def insert(self, user_input: dict[str, Any], ai_text: str | None) -> str:
         payload_for_response: Dict[str, Any] = {**user_input, "ai_response": ai_text}

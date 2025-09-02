@@ -1,11 +1,10 @@
-# main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.core.db import Base, engine
 from app.api.submissions import router as submissions_router
-
+from app.api.ai import router as ai_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,8 +34,5 @@ app.add_middleware(
 )
 
 app.include_router(submissions_router)
+app.include_router(ai_router)
 
-
-@app.get("/")
-async def root():
-    return {"message": "Hello from Code Review Mentor 🚀"}

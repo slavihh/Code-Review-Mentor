@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
@@ -9,9 +9,13 @@ class SubmissionsPgRepo:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_by_uuid(self, uuid: UUID) -> Optional["Submission"]:
+    async def find_by_uuid(self, uuid: UUID) -> Optional["Submission"]:
         res = await self.db.execute(select(Submission).where(Submission.uuid == uuid))
         return res.scalars().first()
+
+    async def find_all(self) -> List["Submission"]:
+        res = await self.db.execute(select(Submission))
+        return  res.scalars().all()
 
     async def create(
         self, *, title: str, status: str, language: str, mongo_id: str
