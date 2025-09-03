@@ -8,7 +8,7 @@ from typing import cast
 from app.models.postgre import Language
 from app.services.submissions import SubmissionsService, _coerce_objid
 from app.schemas.submissions import SubmissionCreate, CodePayload
-from app.repositories.protocols import SubmissionsPGRepo, SubmissionsMongoRepo
+from app.repositories.protocols import SubmissionsPgRepo, SubmissionsMongoRepo
 from app.services.ai import AI as AIService
 import hashlib
 
@@ -38,7 +38,7 @@ class FakePgSubmission:
 
 @pytest.mark.asyncio
 async def test_get_submission_with_payload():
-    fake_pg = cast(SubmissionsPGRepo, AsyncMock(spec=SubmissionsPGRepo))
+    fake_pg = cast(SubmissionsPgRepo, AsyncMock(spec=SubmissionsPgRepo))
     fake_mg = cast(SubmissionsMongoRepo, AsyncMock(spec=SubmissionsMongoRepo))
     fake_ai = cast(AIService, AsyncMock(spec=AIService))
 
@@ -64,7 +64,7 @@ async def test_get_submission_with_payload():
 
 @pytest.mark.asyncio
 async def test_get_submission_not_found():
-    fake_pg = cast(SubmissionsPGRepo, AsyncMock(spec=SubmissionsPGRepo))
+    fake_pg = cast(SubmissionsPgRepo, AsyncMock(spec=SubmissionsPgRepo))
     fake_pg.find_by_uuid.return_value = None
 
     service = SubmissionsService(
@@ -81,7 +81,7 @@ async def test_get_submission_not_found():
 
 @pytest.mark.asyncio
 async def test_get_all_submissions():
-    fake_pg = cast(SubmissionsPGRepo, AsyncMock(spec=SubmissionsPGRepo))
+    fake_pg = cast(SubmissionsPgRepo, AsyncMock(spec=SubmissionsPgRepo))
     fake_pg.find_all.return_value = [FakePgSubmission(), FakePgSubmission()]
 
     service = SubmissionsService(
@@ -97,7 +97,7 @@ async def test_get_all_submissions():
 
 @pytest.mark.asyncio
 async def test_create_submission():
-    fake_pg = cast(SubmissionsPGRepo, AsyncMock(spec=SubmissionsPGRepo))
+    fake_pg = cast(SubmissionsPgRepo, AsyncMock(spec=SubmissionsPgRepo))
     fake_mg = cast(SubmissionsMongoRepo, AsyncMock(spec=SubmissionsMongoRepo))
     fake_ai = cast(AIService, AsyncMock(spec=AIService))
 
@@ -132,7 +132,7 @@ async def test_create_submission():
 
 @pytest.mark.asyncio
 async def test_create_submission_existing_in_db():
-    fake_pg = cast(SubmissionsPGRepo, AsyncMock(spec=SubmissionsPGRepo))
+    fake_pg = cast(SubmissionsPgRepo, AsyncMock(spec=SubmissionsPgRepo))
     fake_mg = cast(SubmissionsMongoRepo, AsyncMock(spec=SubmissionsMongoRepo))
     fake_ai = cast(AIService, AsyncMock(spec=AIService))
 
