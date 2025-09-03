@@ -1,3 +1,8 @@
+# Brief info
+The purpose of this app is to store code submissions and call AI service to gather some feedback in order to improve these submissions.
+
+We also have the functionality to stream AI response without making a submission.
+
 # Development Setup with Docker Compose
 
 This project provides a ready-to-use **development environment** with Docker and Docker Compose.  
@@ -68,4 +73,9 @@ Our system uses a **hybrid storage strategy**:
 - **PostgreSQL** = source of truth (fast, consistent)  
 - **MongoDB** = payload storage (flexible, scalable)
 
+## Diagram
+![img.png](docs/diagram.png)
 
+
+## Potential Deep Dives
+![img.png](docs/potential_deep_dives.png)
