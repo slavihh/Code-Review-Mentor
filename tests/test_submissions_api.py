@@ -31,6 +31,7 @@ def test_create_submission_missing_fields(client):
 class FakeService:
     async def create(self, data):
         return {
+            "id": 9,
             "uuid": "1dd8bc73-010c-4032-a4f5-9b92766a3017",
             "title": "test",
             "language": "Python",

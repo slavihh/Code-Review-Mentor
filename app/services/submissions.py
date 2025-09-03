@@ -93,6 +93,7 @@ class SubmissionsService:
                 mongo_id=sub.mongo_id,
                 created_at=sub.created_at,
                 updated_at=sub.updated_at,
+                short_feedback=sub.short_feedback,
             )
             for sub in pg_submissions
         ]
@@ -132,9 +133,10 @@ class SubmissionsService:
                     )
             except PyMongoError:
                 logger.exception("Error fetching cached Mongo payload")
-
+        short_feedback = ""
         try:
             ai_text = await self.ai.get_feedback(data=data) or ""
+            short_feedback = (ai_text[:62] + "..") if len(ai_text) > 62 else ai_text
             logger.info("AI feedback generated successfully")
         except Exception:
             logger.exception("AI feedback generation failed")
@@ -154,6 +156,7 @@ class SubmissionsService:
                     language=data.language,
                     mongo_id=mongo_id,
                     code_hash=code_hash,
+                    short_feedback=short_feedback,
                 )
                 logger.info(f"Submission stored in Postgres with id={sub.id}")
             except SQLAlchemyError:

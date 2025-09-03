@@ -25,6 +25,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("uuid", sa.UUID(), nullable=False),
         sa.Column("title", sa.String(length=255), nullable=False),
+        sa.Column("short_feedback", sa.String(length=64), nullable=False),
         sa.Column("mongo_id", sa.String(length=64), nullable=True),
         sa.Column("hash", sa.String(length=64), nullable=False),
         sa.Column(
@@ -43,17 +44,13 @@ def upgrade() -> None:
         sa.UniqueConstraint("mongo_id"),
     )
     op.create_index(op.f("ix_submissions_id"), "submissions", ["id"], unique=False)
-    op.create_index(
-        op.f("ix_submissions_title"), "submissions", ["title"], unique=False
-    )
     op.create_index(op.f("ix_submissions_uuid"), "submissions", ["uuid"], unique=True)
-    op.create_index(op.f("ix_submissions_hash"), "submissions", ["hash"], unique=False)
+    op.create_index(op.f("ix_submissions_hash"), "submissions", ["hash"], unique=True)
 
 
 def downgrade() -> None:
     op.drop_index(op.f("ix_submissions_hash"), table_name="submissions")
     op.drop_index(op.f("ix_submissions_uuid"), table_name="submissions")
-    op.drop_index(op.f("ix_submissions_title"), table_name="submissions")
     op.drop_index(op.f("ix_submissions_id"), table_name="submissions")
     op.drop_table("submissions")
     # ### end Alembic commands ###

@@ -38,6 +38,7 @@ class SubmissionWithPayloadOut(BaseModel):
 class SubmissionOut(BaseModel):
     uuid: UUID
     title: str
+    short_feedback: str
     language: Language
     mongo_id: Optional[str] = None
     created_at: datetime

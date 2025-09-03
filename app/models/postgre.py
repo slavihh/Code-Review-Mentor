@@ -3,7 +3,6 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from sqlalchemy import String, DateTime, func, Integer, Enum as SqlEnum
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -35,9 +34,10 @@ class Submission(Base):
         nullable=False,
         index=True,
     )
-    mongo_id: Mapped[Optional[str]] = mapped_column(
-        String(64), nullable=True, unique=True
+    short_feedback: Mapped[str] = mapped_column(
+        String(64), nullable=False, unique=False
     )
+    mongo_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     language: Mapped[Language] = mapped_column(
         SqlEnum(Language), nullable=False, index=True
     )

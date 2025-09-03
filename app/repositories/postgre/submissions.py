@@ -26,12 +26,19 @@ class SubmissionsPgRepo:
         return res.scalars().all()
 
     async def create(
-        self, *, title: str, language: Language, mongo_id: str, code_hash: str
+        self,
+        *,
+        title: str,
+        language: Language,
+        mongo_id: str,
+        code_hash: str,
+        short_feedback: str,
     ) -> "Submission":
         sub = Submission(
             title=title,
             language=language,
             mongo_id=mongo_id,
+            short_feedback=short_feedback,
             hash=code_hash,
         )
         self.db.add(sub)
