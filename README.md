@@ -27,23 +27,45 @@ It runs the application along with its dependencies in containers.
 
 # Documentation
 
-1. Databases
+## Why PostgreSQL + MongoDB
 
-## General code submission info (PostgreSQL)
-
-- **Examples:** `user_id`, `submission_id`, `timestamp`, `programming_language`, `status` (success/failure).  
-- **Nature of data:** Structured, predictable, and benefits from relations (e.g., linking to a `users` table).  
-- **Query use cases:**  
-  - “Show me all successful submissions per user in the last 24h.”  
-  - “Aggregate average runtime per language.”  
-- **Why PostgreSQL?** Because submissions are **structured, relational, and query-heavy**.
+Our system uses a **hybrid storage strategy**:  
+- **PostgreSQL** for structured metadata  
+- **MongoDB** for flexible payloads  
 
 ---
 
-## AI service response (MongoDB)
+## PostgreSQL (Relational, Structured Data)
+**Stores:**  
+- `uuid`, `title`, `hash`, `language`, `created_at`, `updated_at`, `mongo_id`
 
-- **Examples:** Raw AI output, explanations, logs, error messages, structured/unstructured JSON responses.  
-- **Nature of data:** Can vary widely (sometimes plain text, sometimes JSON, sometimes multiple nested fields).  
-- **Schema flexibility:** You don’t want to force a rigid schema → flexibility matters.  
-- **Why MongoDB?** Because AI outputs are **unstructured, variable, and better stored as documents**.  
-  MongoDB makes it easy to just dump and query JSON-like objects without rigid schemas.
+**Why:**  
+- Strong constraints & indexing (UUID, unique hashes, enums)  
+- Efficient queries (search by title, language, recent submissions)  
+- Lightweight listing without large payloads  
+
+---
+
+## MongoDB (Document Store, Flexible Data)
+**Stores:**  
+- `content` (user code)  
+- `ai_response` (AI feedback)
+
+**Why:**  
+- Handles large, variable, and evolving payloads  
+- No schema migrations needed for changes
+- Payload fetched only when needed, improving performance  
+
+---
+
+## How They Work Together
+1. **Create:** payload → MongoDB, metadata + `mongo_id` → PostgreSQL
+2. **Get:** metadata from PostgreSQL, payload (if needed) from MongoDB
+3. **List:** only PostgreSQL queried for efficiency
+
+---
+
+- **PostgreSQL** = source of truth (fast, consistent)  
+- **MongoDB** = payload storage (flexible, scalable)
+
+
