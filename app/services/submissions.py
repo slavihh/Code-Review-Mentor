@@ -161,16 +161,19 @@ class SubmissionsService:
         except PyMongoError:
             logger.exception("Mongo insert failed — proceeding without Mongo reference")
 
-        try:
-            sub = await self.pg.create(
-                title=data.title,
-                language=data.language,
-                mongo_id=mongo_id,
-                code_hash=code_hash,
-            )
-            logger.info(f"Submission stored in Postgres with id={sub.id}")
-        except SQLAlchemyError:
-            logger.exception("Database error while creating submission")
+        if mongo_id:
+            try:
+                sub = await self.pg.create(
+                    title=data.title,
+                    language=data.language,
+                    mongo_id=mongo_id,
+                    code_hash=code_hash,
+                )
+                logger.info(f"Submission stored in Postgres with id={sub.id}")
+            except SQLAlchemyError:
+                logger.exception("Database error while creating submission")
+                raise HTTPException(500, "Database error")
+        else:
             raise HTTPException(500, "Database error")
 
         return build_submission_with_payload(sub, user_input, ai_text)
