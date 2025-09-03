@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+import logging
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
 from app.core.db import Base, engine
@@ -7,15 +9,22 @@ from app.api.submissions import router as submissions_router
 from app.api.ai import router as ai_router
 
 
+LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+logger = logging.getLogger("app")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
+    logger.info("Starting up application...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     try:
         yield
     finally:
         # Shutdown
+        logger.info("Shutting down application...")
         await engine.dispose()
 
 
@@ -26,6 +35,8 @@ app = FastAPI(
     version="0.1.0",
 )
 
+
+# --- CORS ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -34,5 +45,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# --- Routers ---
 app.include_router(submissions_router)
 app.include_router(ai_router)
+
+
+# --- Global error handler ---
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception(f"Unhandled error at {request.url.path}")  # full traceback
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal Server Error"
+        },  # don’t leak stack traces to clients
+    )

@@ -1,3 +1,5 @@
+import hashlib
+import logging
 from typing import Any, Dict, List
 from uuid import UUID
 from bson import ObjectId
@@ -11,7 +13,10 @@ from app.schemas.submissions import (
 )
 from app.repositories.protocols import SubmissionsPGRepo, SubmissionsMongoRepo
 from app.services.ai import AI as AIService
-import hashlib
+from sqlalchemy.exc import SQLAlchemyError
+from pymongo.errors import PyMongoError
+
+logger = logging.getLogger("app.services.submissions")
 
 
 def _coerce_objid(x):
@@ -49,16 +54,29 @@ class SubmissionsService:
         self.ai = ai
 
     async def get(self, uuid: UUID) -> SubmissionWithPayloadOut:
-        sub = await self.pg.find_by_uuid(uuid)
+        logger.info(f"Fetching submission by UUID: {uuid}")
+        try:
+            sub = await self.pg.find_by_uuid(uuid)
+        except Exception:
+            logger.exception(f"Database error while fetching submission {uuid}")
+            raise HTTPException(500, "Database error")
+
         if not sub:
+            logger.warning(f"Submission not found: {uuid}")
             raise HTTPException(404, "Submission not found")
 
         payload_doc = None
         if sub.mongo_id:
-            raw = await self.mg.find(sub.mongo_id)
-            payload_doc = _coerce_objid(raw) if raw else None
-            if payload_doc:
-                payload_doc.pop("_id", None)
+            try:
+                logger.debug(f"Fetching Mongo payload for submission {sub.id}")
+                raw = await self.mg.find(sub.mongo_id)
+                payload_doc = _coerce_objid(raw) if raw else None
+                if payload_doc:
+                    payload_doc.pop("_id", None)
+            except Exception:
+                logger.exception(
+                    f"Error fetching Mongo payload for submission {sub.id}"
+                )
 
         return SubmissionWithPayloadOut(
             id=sub.id,
@@ -72,48 +90,87 @@ class SubmissionsService:
         )
 
     async def getAll(self) -> List[SubmissionWithPayloadOut]:
-        pg_submissions = await self.pg.find_all()
+        logger.info("Fetching all submissions from Postgres")
+        try:
+            pg_submissions = await self.pg.find_all()
+        except Exception:
+            logger.exception("Database error while fetching all submissions")
+            raise HTTPException(500, "Database error")
+
         result = []
         for sub in pg_submissions:
-            submission = SubmissionWithPayloadOut(
-                id=sub.id,
-                uuid=sub.uuid,
-                title=sub.title,
-                language=sub.language,
-                mongo_id=sub.mongo_id,
-                created_at=sub.created_at,
-                updated_at=sub.updated_at,
+            result.append(
+                SubmissionWithPayloadOut(
+                    id=sub.id,
+                    uuid=sub.uuid,
+                    title=sub.title,
+                    language=sub.language,
+                    mongo_id=sub.mongo_id,
+                    created_at=sub.created_at,
+                    updated_at=sub.updated_at,
+                )
             )
-            result.append(submission)
+        logger.info(f"Retrieved {len(result)} submissions")
         return result
 
     async def create(self, data: SubmissionCreate) -> SubmissionWithPayloadOut:
+        logger.info(
+            f"Creating new submission with title={data.title}, language={data.language}"
+        )
         user_input = data.payload.model_dump()
         content = user_input.get("content")
         if not content:
+            logger.warning("Submission create failed: missing content field")
             raise HTTPException(400, "Content field is required")
-        code_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-        check_submission = await self.pg.find_by_hash(code_hash)
-        # return already submitted AI response based on hash
-        if check_submission and check_submission.mongo_id is not None:
-            raw = await self.mg.find(str(check_submission.mongo_id))
-            payload_doc = _coerce_objid(raw) if raw else None
-            if payload_doc:
-                payload_doc.pop("_id", None)
-                print(payload_doc.keys())
-                return build_submission_with_payload(
-                    check_submission, user_input, payload_doc["ai_response"]
-                )
-        ai_text = await self.ai.get_feedback(data=data)
-        if not ai_text:
-            ai_text = ""
-        mongo_id = await self.mg.insert(user_input, ai_text)
 
-        sub = await self.pg.create(
-            title=data.title,
-            language=data.language,
-            mongo_id=mongo_id,
-            code_hash=code_hash,
-        )
+        code_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        logger.debug(f"Generated hash {code_hash} for submission content")
+
+        try:
+            check_submission = await self.pg.find_by_hash(code_hash)
+        except Exception:
+            logger.exception("Database error while checking submission hash")
+            raise HTTPException(500, "Database error")
+
+        if check_submission and check_submission.mongo_id is not None:
+            try:
+                logger.info(
+                    f"Duplicate submission detected (hash={code_hash}), returning cached result"
+                )
+                raw = await self.mg.find(str(check_submission.mongo_id))
+                payload_doc = _coerce_objid(raw) if raw else None
+                if payload_doc:
+                    payload_doc.pop("_id", None)
+                    return build_submission_with_payload(
+                        check_submission, user_input, payload_doc.get("ai_response", "")
+                    )
+            except PyMongoError:
+                logger.exception("Error fetching cached Mongo payload")
+
+        try:
+            ai_text = await self.ai.get_feedback(data=data) or ""
+            logger.info("AI feedback generated successfully")
+        except Exception:
+            logger.exception("AI feedback generation failed")
+            ai_text = ""
+
+        mongo_id = None
+        try:
+            mongo_id = await self.mg.insert(user_input, ai_text)
+            logger.info(f"Inserted payload into MongoDB with id={mongo_id}")
+        except PyMongoError:
+            logger.exception("Mongo insert failed — proceeding without Mongo reference")
+
+        try:
+            sub = await self.pg.create(
+                title=data.title,
+                language=data.language,
+                mongo_id=mongo_id,
+                code_hash=code_hash,
+            )
+            logger.info(f"Submission stored in Postgres with id={sub.id}")
+        except SQLAlchemyError:
+            logger.exception("Database error while creating submission")
+            raise HTTPException(500, "Database error")
 
         return build_submission_with_payload(sub, user_input, ai_text)
