@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from bson import ObjectId
 from pydantic import GetCoreSchemaHandler
@@ -26,5 +26,4 @@ class SubmissionDocument(BaseModel):
     content: str
     ai_response: Optional[str] = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
