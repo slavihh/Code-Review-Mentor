@@ -7,6 +7,7 @@ from openai.types.chat import (
 import os
 from app.schemas.submissions import SubmissionCreate
 from app.schemas.ai import ReviewPayload
+from openai import RateLimitError, APIError, APIConnectionError
 
 
 class AI:
@@ -56,25 +57,57 @@ class AI:
 
     async def get_feedback(self, data: SubmissionCreate | ReviewPayload) -> str | None:
         messages = self.build_messages(data)
-        chat = await self.ai_client.chat.completions.create(
-            model=self.OPENAI_MODEL,
-            messages=messages,
-        )
-        return chat.choices[0].message.content
+
+        try:
+            chat = await self.ai_client.chat.completions.create(
+                model=self.OPENAI_MODEL,
+                messages=messages,
+            )
+            return chat.choices[0].message.content
+
+        except RateLimitError:
+            return "Too many requests. Please try again later."
+
+        except APIConnectionError:
+            return "Could not reach the AI service."
+
+        except APIError as e:
+            return f"AI service error: {e}"
+
+        except Exception as e:
+            print(f"Unexpected error in get_feedback: {e}")
+            return None
 
     async def stream_feedback(
         self, data: SubmissionCreate | ReviewPayload
     ) -> AsyncGenerator[bytes, None]:
         messages = self.build_messages(data)
-        stream = await self.ai_client.chat.completions.create(
-            model=self.OPENAI_MODEL, messages=messages, stream=True
-        )
 
-        async for chunk in stream:
-            for choice in chunk.choices:
-                delta = choice.delta.content
-                if delta:
-                    yield delta.encode("utf-8")
+        try:
+            stream = await self.ai_client.chat.completions.create(
+                model=self.OPENAI_MODEL,
+                messages=messages,
+                stream=True,
+            )
+
+            async for chunk in stream:
+                for choice in chunk.choices:
+                    delta = choice.delta.content
+                    if delta:
+                        yield delta.encode("utf-8")
+
+        except RateLimitError:
+            yield b"Too many requests. Please try again later."
+
+        except APIConnectionError:
+            yield b"Could not reach the AI service."
+
+        except APIError as e:
+            yield f"AI service error: {e}".encode("utf-8")
+
+        except Exception as e:
+            print(f"Unexpected error in stream_feedback: {e}")
+            yield b"Unexpected error occurred."
 
 
 def get_ai() -> AI:

@@ -1,13 +1,14 @@
 from typing import Protocol, Any, Optional, Dict, Sequence
 from uuid import UUID
-from app.models.postgre import Submission
+from app.models.postgre import Submission, Language
 
 
 class SubmissionsPGRepo(Protocol):
     async def find_by_uuid(self, uuid: UUID) -> Optional["Submission"]: ...
     async def find_all(self) -> Sequence["Submission"]: ...
+    async def find_by_hash(self, code_hash: str) -> Optional["Submission"]: ...
     async def create(
-        self, *, title: str, status: str, language: str, mongo_id: str
+        self, *, title: str, language: Language, mongo_id: str, code_hash: str
     ) -> "Submission": ...
 
 

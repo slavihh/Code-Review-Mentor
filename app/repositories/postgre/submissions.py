@@ -2,7 +2,7 @@ from typing import Optional, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
-from app.models.postgre import Submission
+from app.models.postgre import Submission, Language
 
 
 class SubmissionsPgRepo:
@@ -13,18 +13,24 @@ class SubmissionsPgRepo:
         res = await self.db.execute(select(Submission).where(Submission.uuid == uuid))
         return res.scalars().first()
 
+    async def find_by_hash(self, code_hash: str) -> Optional["Submission"]:
+        res = await self.db.execute(
+            select(Submission).where(Submission.hash == code_hash)
+        )
+        return res.scalars().first()
+
     async def find_all(self) -> Sequence["Submission"]:
         res = await self.db.execute(select(Submission))
         return res.scalars().all()
 
     async def create(
-        self, *, title: str, status: str, language: str, mongo_id: str
+        self, *, title: str, language: Language, mongo_id: str, code_hash: str
     ) -> "Submission":
         sub = Submission(
             title=title,
-            status=status or "pending",
             language=language,
             mongo_id=mongo_id,
+            hash=code_hash,
         )
         self.db.add(sub)
         await self.db.commit()
