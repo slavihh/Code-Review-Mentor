@@ -14,14 +14,12 @@ class CodePayload(BaseModel):
 
 class SubmissionCreate(BaseModel):
     title: str = Field(..., max_length=255)
-    status: Optional[str] = Field(default="pending")
     language: Language
     payload: CodePayload
 
 
 class SubmissionUpdate(BaseModel):
     title: Optional[str] = Field(None, max_length=255)
-    status: Optional[str] = None
     payload: Optional[CodePayload] = None
 
 
@@ -29,7 +27,6 @@ class SubmissionWithPayloadOut(BaseModel):
     id: int
     uuid: UUID
     title: str
-    status: str
     language: Language
     mongo_id: Optional[str] = None
     created_at: datetime
@@ -43,7 +40,6 @@ class SubmissionOut(BaseModel):
     id: int
     uuid: UUID
     title: str
-    status: str
     language: Language
     mongo_id: Optional[str] = None
     created_at: datetime

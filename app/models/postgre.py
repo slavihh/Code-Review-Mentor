@@ -30,8 +30,10 @@ class Submission(Base):
         default=uuid.uuid4,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    status: Mapped[str] = mapped_column(
-        String(50), nullable=False, default="pending", index=True
+    hash: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        index=True,
     )
     mongo_id: Mapped[Optional[str]] = mapped_column(
         String(64), nullable=True, unique=True
