@@ -9,7 +9,13 @@ class SubmissionsPgRepo(Protocol):
     async def find_all(self) -> Sequence["Submission"]: ...
     async def find_by_hash(self, code_hash: str) -> Optional["Submission"]: ...
     async def create(
-        self, *, title: str, language: Language, mongo_id: str, code_hash: str
+        self,
+        *,
+        title: str,
+        language: Language,
+        mongo_id: str,
+        code_hash: str,
+        short_feedback: str,
     ) -> "Submission": ...
 
 
