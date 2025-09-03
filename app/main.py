@@ -53,8 +53,6 @@ app.add_middleware(
 app.include_router(submissions_router)
 app.include_router(ai_router)
 
-
-# --- Global error handler ---
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.exception(f"Unhandled error at {request.url.path}")  # full traceback
@@ -62,5 +60,5 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={
             "detail": "Internal Server Error"
-        },  # don’t leak stack traces to clients
+        },
     )
