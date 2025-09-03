@@ -10,7 +10,7 @@ from app.schemas.submissions import (
     SubmissionWithPayloadOut,
     CodePayload,
     SubmissionCreate,
-    SubmissionOut
+    SubmissionOut,
 )
 from app.repositories.protocols import SubmissionsPGRepo, SubmissionsMongoRepo
 from app.services.ai import AI as AIService

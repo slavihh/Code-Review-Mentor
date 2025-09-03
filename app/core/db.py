@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
@@ -8,8 +9,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
-from motor.motor_asyncio import AsyncIOMotorDatabase
-from app.main import mongo_db
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 import os
 
 DATABASE_URL: str = os.getenv(
@@ -22,6 +22,8 @@ engine: AsyncEngine = create_async_engine(DATABASE_URL, echo=True, future=True)
 SessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
     bind=engine, expire_on_commit=False
 )
+
+logger = logging.getLogger("app")
 
 
 class Base(DeclarativeBase):
@@ -36,5 +38,26 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     await engine.dispose()
 
 
-async def get_mongo_db() -> AsyncIOMotorDatabase:
-    return mongo_db
+MONGO_URL = os.getenv("MONGO_URL")
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "codereview")
+
+mongo_client: AsyncIOMotorClient | None = None
+mongo_db: AsyncIOMotorDatabase | None = None
+
+
+def init_mongo():
+    global mongo_client, mongo_db
+    mongo_client = AsyncIOMotorClient(MONGO_URL)
+    mongo_db = mongo_client[MONGO_DB_NAME]
+    logger.info("MongoDB initialized")
+
+
+def close_mongo():
+    global mongo_client
+    if mongo_client:
+        mongo_client.close()
+        logger.info("MongoDB closed")
+
+
+async def get_mongo_db() -> AsyncGenerator[AsyncIOMotorDatabase, None]:
+    yield mongo_db
