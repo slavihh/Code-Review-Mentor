@@ -32,8 +32,11 @@ MONGO_DB_NAME: str = os.getenv("MONGO_DB_NAME", "codereview")
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with SessionLocal() as session:
+    engine = create_async_engine(DATABASE_URL, echo=True, future=True)
+    async_session = async_sessionmaker(engine, expire_on_commit=False)
+    async with async_session() as session:
         yield session
+    await engine.dispose()
 
 
 mongo_client: AsyncIOMotorClient | None = None
