@@ -10,6 +10,7 @@ from app.schemas.submissions import (
     SubmissionWithPayloadOut,
     CodePayload,
     SubmissionCreate,
+    SubmissionOut
 )
 from app.repositories.protocols import SubmissionsPGRepo, SubmissionsMongoRepo
 from app.services.ai import AI as AIService
@@ -36,7 +37,6 @@ def build_submission_with_payload(
     clean_payload = _coerce_objid(payload_for_response)
     clean_payload.pop("_id", None)
     return SubmissionWithPayloadOut(
-        id=sub.id,
         uuid=sub.uuid,
         title=sub.title,
         language=sub.language,
@@ -58,8 +58,8 @@ class SubmissionsService:
         try:
             sub = await self.pg.find_by_uuid(uuid)
         except Exception:
-            logger.exception(f"Database error while fetching submission {uuid}")
-            raise HTTPException(500, "Database error")
+            logger.exception(f"Error occurred while fetching submission {uuid}")
+            raise HTTPException(500, "Error occurred")
 
         if not sub:
             logger.warning(f"Submission not found: {uuid}")
@@ -79,7 +79,6 @@ class SubmissionsService:
                 )
 
         return SubmissionWithPayloadOut(
-            id=sub.id,
             uuid=sub.uuid,
             title=sub.title,
             language=sub.language,
@@ -94,14 +93,13 @@ class SubmissionsService:
         try:
             pg_submissions = await self.pg.find_all()
         except Exception:
-            logger.exception("Database error while fetching all submissions")
-            raise HTTPException(500, "Database error")
+            logger.exception("Error occurred while fetching all submissions")
+            raise HTTPException(500, "Error occurred")
 
         result = []
         for sub in pg_submissions:
             result.append(
-                SubmissionWithPayloadOut(
-                    id=sub.id,
+                SubmissionOut(
                     uuid=sub.uuid,
                     title=sub.title,
                     language=sub.language,
@@ -129,8 +127,8 @@ class SubmissionsService:
         try:
             check_submission = await self.pg.find_by_hash(code_hash)
         except Exception:
-            logger.exception("Database error while checking submission hash")
-            raise HTTPException(500, "Database error")
+            logger.exception("Error occurred while checking submission hash")
+            raise HTTPException(500, "Error occurred")
 
         if check_submission and check_submission.mongo_id is not None:
             try:
@@ -171,9 +169,9 @@ class SubmissionsService:
                 )
                 logger.info(f"Submission stored in Postgres with id={sub.id}")
             except SQLAlchemyError:
-                logger.exception("Database error while creating submission")
-                raise HTTPException(500, "Database error")
+                logger.exception("Error occurred while creating submission")
+                raise HTTPException(500, "Error occurred")
         else:
-            raise HTTPException(500, "Database error")
+            raise HTTPException(500, "Error occurred")
 
         return build_submission_with_payload(sub, user_input, ai_text)

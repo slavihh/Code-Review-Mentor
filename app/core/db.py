@@ -41,9 +41,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 mongo_client: AsyncIOMotorClient | None = None
 
-
-async def get_mongo_db() -> AsyncGenerator[AsyncIOMotorDatabase, None]:
+async def get_mongo_db() -> AsyncIOMotorDatabase:
     global mongo_client
     if mongo_client is None:
         mongo_client = AsyncIOMotorClient(MONGO_URL)
-    yield mongo_client[MONGO_DB_NAME]
+    return mongo_client[MONGO_DB_NAME]
