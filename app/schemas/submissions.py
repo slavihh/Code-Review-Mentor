@@ -27,7 +27,6 @@ class SubmissionWithPayloadOut(BaseModel):
     uuid: UUID
     title: str
     language: Language
-    mongo_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     payload: Optional[CodePayload] = None
@@ -40,6 +39,5 @@ class SubmissionOut(BaseModel):
     title: str
     short_feedback: str
     language: Language
-    mongo_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
