@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
-from app.core.db import Base, engine, init_mongo, close_mongo
+from app.core.db import Base, engine
 from app.api.submissions import router as submissions_router
 from app.api.ai import router as ai_router
 
@@ -20,15 +20,11 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    init_mongo()
-
     try:
         yield
     finally:
         logger.info("Shutting down application...")
-
         await engine.dispose()
-        close_mongo()
 
 
 app = FastAPI(

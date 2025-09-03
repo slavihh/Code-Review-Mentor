@@ -12,10 +12,11 @@ from sqlalchemy.orm import DeclarativeBase
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 import os
 
+logger = logging.getLogger("app")
+
 DATABASE_URL: str = os.getenv(
     "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@db:5432/codereview"
 )
-
 
 engine: AsyncEngine = create_async_engine(DATABASE_URL, echo=True, future=True)
 
@@ -23,43 +24,26 @@ SessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
     bind=engine, expire_on_commit=False
 )
 
-logger = logging.getLogger("app")
-
 
 class Base(DeclarativeBase):
     pass
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    engine = create_async_engine(DATABASE_URL, echo=True, future=True)
-    async_session = async_sessionmaker(engine, expire_on_commit=False)
-    async with async_session() as session:
+    """Provide a database session."""
+    async with SessionLocal() as session:
         yield session
-    await engine.dispose()
 
 
 MONGO_URL = os.getenv("MONGO_URL")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "codereview")
 
-mongo_client: AsyncIOMotorClient | None = None
-mongo_db: AsyncIOMotorDatabase | None = None
+mongo_client: AsyncIOMotorClient = AsyncIOMotorClient(MONGO_URL)
+mongo_db: AsyncIOMotorDatabase = mongo_client[MONGO_DB_NAME]
 
-
-def init_mongo():
-    global mongo_client, mongo_db
-    mongo_client = AsyncIOMotorClient(MONGO_URL)
-    mongo_db = mongo_client.get_database("codereview")
-    logger.info("MongoDB initialized")
-
-
-def close_mongo():
-    global mongo_client
-    if mongo_client:
-        mongo_client.close()
-        logger.info("MongoDB closed")
+logger.info("MongoDB client initialized")
 
 
 async def get_mongo_db() -> AsyncGenerator[AsyncIOMotorDatabase, None]:
-    if mongo_db is None:
-        init_mongo()
+    """Provide a Mongo database instance."""
     yield mongo_db
