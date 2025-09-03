@@ -20,7 +20,9 @@ class SubmissionsPgRepo:
         return res.scalars().first()
 
     async def find_all(self) -> Sequence["Submission"]:
-        res = await self.db.execute(select(Submission).limit(50)) # getting only the last 50
+        res = await self.db.execute(
+            select(Submission).limit(50)
+        )  # getting only the last 50
         return res.scalars().all()
 
     async def create(
