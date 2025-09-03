@@ -28,7 +28,6 @@ def build_submission_with_payload(
         uuid=sub.uuid,
         title=sub.title,
         language=sub.language,
-        mongo_id=sub.mongo_id,
         created_at=sub.created_at,
         updated_at=sub.updated_at,
         payload=CodePayload(**payload_for_response),
@@ -67,7 +66,6 @@ class SubmissionsService:
             uuid=sub.uuid,
             title=sub.title,
             language=sub.language,
-            mongo_id=sub.mongo_id,
             created_at=sub.created_at,
             updated_at=sub.updated_at,
             payload=(
@@ -90,7 +88,6 @@ class SubmissionsService:
                 uuid=sub.uuid,
                 title=sub.title,
                 language=sub.language,
-                mongo_id=sub.mongo_id,
                 created_at=sub.created_at,
                 updated_at=sub.updated_at,
                 short_feedback=sub.short_feedback,
