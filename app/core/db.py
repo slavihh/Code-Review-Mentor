@@ -61,5 +61,5 @@ def close_mongo():
 
 async def get_mongo_db() -> AsyncGenerator[AsyncIOMotorDatabase, None]:
     if mongo_db is None:
-        raise RuntimeError("MongoDB is not initialized. Did you forget to run init_mongo() in lifespan?")
+        init_mongo()
     yield mongo_db
