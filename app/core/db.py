@@ -30,14 +30,16 @@ class Base(DeclarativeBase):
 MONGO_URL: str = os.getenv("MONGO_URL", "mongodb://mongo:27017")
 MONGO_DB_NAME: str = os.getenv("MONGO_DB_NAME", "codereview")
 
-mongo_client: AsyncIOMotorClient = AsyncIOMotorClient(MONGO_URL)
-mongo_db: AsyncIOMotorDatabase = mongo_client[MONGO_DB_NAME]
-
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
         yield session
 
 
+mongo_client: AsyncIOMotorClient | None = None
+
 async def get_mongo_db() -> AsyncGenerator[AsyncIOMotorDatabase, None]:
-    yield mongo_db
+    global mongo_client
+    if mongo_client is None:
+        mongo_client = AsyncIOMotorClient(MONGO_URL)
+    yield mongo_client[MONGO_DB_NAME]
