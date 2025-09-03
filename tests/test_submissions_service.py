@@ -4,25 +4,14 @@ from datetime import datetime, UTC
 from fastapi import HTTPException
 from unittest.mock import AsyncMock
 from typing import cast
+import hashlib
 
 from app.models.postgre import Language
-from app.services.submissions import SubmissionsService, _coerce_objid
+from app.services.submissions import SubmissionsService
 from app.schemas.submissions import SubmissionCreate, CodePayload
 from app.repositories.protocols import SubmissionsPgRepo, SubmissionsMongoRepo
 from app.services.ai import AI as AIService
-import hashlib
-
-
-@pytest.mark.asyncio
-async def test_coerce_objid():
-    from bson import ObjectId
-
-    objid = ObjectId()
-    data = {"id": objid, "list": [objid, {"nested": objid}]}
-    result = _coerce_objid(data)
-    assert isinstance(result["id"], str)
-    assert isinstance(result["list"][0], str)
-    assert isinstance(result["list"][1]["nested"], str)
+from app.models.mongo import SubmissionDocument
 
 
 class FakePgSubmission:
@@ -44,11 +33,11 @@ async def test_get_submission_with_payload():
 
     fake_submission = FakePgSubmission(mongo_id="abc123")
     fake_pg.find_by_uuid.return_value = fake_submission
-    fake_mg.find.return_value = {
-        "_id": "abc123",
-        "content": "print('Testing submissions service implementation to prevent errors')",
-        "ai_response": "Looks good",
-    }
+    fake_mg.find.return_value = SubmissionDocument(
+        _id="abc123",
+        content="print('Testing submissions service implementation to prevent errors')",
+        ai_response="Looks good",
+    )
 
     service = SubmissionsService(pg=fake_pg, mg=fake_mg, ai=fake_ai)
 
@@ -103,11 +92,7 @@ async def test_create_submission():
 
     fake_ai.get_feedback.return_value = "AI says OK"
     fake_pg.find_by_hash.return_value = None
-    fake_mg.insert.return_value = {
-        "_id": "mongo123",
-        "content": "print('Testing submissions service implementation to prevent errors')",
-        "ai_response": "AI says OK",
-    }
+    fake_mg.insert.return_value = "mongo123"
     fake_pg.create.return_value = FakePgSubmission(mongo_id="mongo123")
 
     service = SubmissionsService(pg=fake_pg, mg=fake_mg, ai=fake_ai)
@@ -150,11 +135,11 @@ async def test_create_submission_existing_in_db():
     existing_sub = FakePgSubmission(mongo_id="mongo123")
     fake_pg.find_by_hash.return_value = existing_sub
     fake_mg.find = AsyncMock(
-        return_value={
-            "_id": "mongo123",
-            "content": content,
-            "ai_response": "Already exists!",
-        }
+        return_value=SubmissionDocument(
+            _id="mongo123",
+            content=content,
+            ai_response="Already exists!",
+        )
     )
 
     result = await service.create(data)

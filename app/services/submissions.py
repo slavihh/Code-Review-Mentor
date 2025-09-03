@@ -1,9 +1,10 @@
 import hashlib
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from uuid import UUID
-from bson import ObjectId
 from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
+from pymongo.errors import PyMongoError
 
 from app.models.postgre import Submission
 from app.schemas.submissions import (
@@ -13,29 +14,16 @@ from app.schemas.submissions import (
     SubmissionOut,
 )
 from app.repositories.protocols import SubmissionsPgRepo, SubmissionsMongoRepo
+from app.models.mongo import SubmissionDocument
 from app.services.ai import AI as AIService
-from sqlalchemy.exc import SQLAlchemyError
-from pymongo.errors import PyMongoError
 
 logger = logging.getLogger("app.services.submissions")
-
-
-def _coerce_objid(x):
-    if isinstance(x, ObjectId):
-        return str(x)
-    if isinstance(x, list):
-        return [_coerce_objid(i) for i in x]
-    if isinstance(x, dict):
-        return {k: _coerce_objid(v) for k, v in x.items()}
-    return x
 
 
 def build_submission_with_payload(
     sub: Submission, user_input: dict[str, Any], ai_text: str
 ) -> SubmissionWithPayloadOut:
     payload_for_response: Dict[str, Any] = {**user_input, "ai_response": ai_text}
-    clean_payload = _coerce_objid(payload_for_response)
-    clean_payload.pop("_id", None)
     return SubmissionWithPayloadOut(
         uuid=sub.uuid,
         title=sub.title,
@@ -43,7 +31,7 @@ def build_submission_with_payload(
         mongo_id=sub.mongo_id,
         created_at=sub.created_at,
         updated_at=sub.updated_at,
-        payload=CodePayload(**clean_payload),
+        payload=CodePayload(**payload_for_response),
     )
 
 
@@ -65,14 +53,11 @@ class SubmissionsService:
             logger.warning(f"Submission not found: {uuid}")
             raise HTTPException(404, "Submission not found")
 
-        payload_doc = None
+        payload_doc: Optional[SubmissionDocument] = None
         if sub.mongo_id:
             try:
                 logger.debug(f"Fetching Mongo payload for submission {sub.id}")
-                raw = await self.mg.find(sub.mongo_id)
-                payload_doc = _coerce_objid(raw) if raw else None
-                if payload_doc:
-                    payload_doc.pop("_id", None)
+                payload_doc = await self.mg.find(sub.mongo_id)
             except Exception:
                 logger.exception(
                     f"Error fetching Mongo payload for submission {sub.id}"
@@ -85,7 +70,11 @@ class SubmissionsService:
             mongo_id=sub.mongo_id,
             created_at=sub.created_at,
             updated_at=sub.updated_at,
-            payload=CodePayload(**payload_doc) if payload_doc else None,
+            payload=(
+                CodePayload(**payload_doc.model_dump(by_alias=True, exclude_none=True))
+                if payload_doc
+                else None
+            ),
         )
 
     async def get_all(self) -> List[SubmissionOut]:
@@ -96,18 +85,17 @@ class SubmissionsService:
             logger.exception("Error occurred while fetching all submissions")
             raise HTTPException(500, "Error occurred")
 
-        result = []
-        for sub in pg_submissions:
-            result.append(
-                SubmissionOut(
-                    uuid=sub.uuid,
-                    title=sub.title,
-                    language=sub.language,
-                    mongo_id=sub.mongo_id,
-                    created_at=sub.created_at,
-                    updated_at=sub.updated_at,
-                )
+        result = [
+            SubmissionOut(
+                uuid=sub.uuid,
+                title=sub.title,
+                language=sub.language,
+                mongo_id=sub.mongo_id,
+                created_at=sub.created_at,
+                updated_at=sub.updated_at,
             )
+            for sub in pg_submissions
+        ]
         logger.info(f"Retrieved {len(result)} submissions")
         return result
 
@@ -135,12 +123,12 @@ class SubmissionsService:
                 logger.info(
                     f"Duplicate submission detected (hash={code_hash}), returning cached result"
                 )
-                raw = await self.mg.find(str(check_submission.mongo_id))
-                payload_doc = _coerce_objid(raw) if raw else None
+                payload_doc = await self.mg.find(str(check_submission.mongo_id))
                 if payload_doc:
-                    payload_doc.pop("_id", None)
                     return build_submission_with_payload(
-                        check_submission, user_input, payload_doc.get("ai_response", "")
+                        check_submission,
+                        user_input,
+                        payload_doc.ai_response or "",
                     )
             except PyMongoError:
                 logger.exception("Error fetching cached Mongo payload")
@@ -152,7 +140,7 @@ class SubmissionsService:
             logger.exception("AI feedback generation failed")
             ai_text = ""
 
-        mongo_id = None
+        mongo_id: Optional[str] = None
         try:
             mongo_id = await self.mg.insert(user_input, ai_text)
             logger.info(f"Inserted payload into MongoDB with id={mongo_id}")
