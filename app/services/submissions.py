@@ -9,7 +9,7 @@ from app.schemas.submissions import (
     CodePayload,
     SubmissionCreate,
 )
-from app.repositories.protocols import SubmissionsPGRepo, SubmissionsMongoRepo
+from app.repositories.protocols import SubmissionsPgRepo, SubmissionsMongoRepo
 from app.services.ai import AI as AIService
 from app.models.mongo import SubmissionDocument
 
@@ -19,7 +19,6 @@ def build_submission_with_payload(
 ) -> SubmissionWithPayloadOut:
     payload_for_response: Dict[str, Any] = {**user_input, "ai_response": ai_text}
     return SubmissionWithPayloadOut(
-        id=sub.id,
         uuid=sub.uuid,
         title=sub.title,
         language=sub.language,
@@ -31,7 +30,7 @@ def build_submission_with_payload(
 
 
 class SubmissionsService:
-    def __init__(self, pg: SubmissionsPGRepo, mg: SubmissionsMongoRepo, ai: AIService):
+    def __init__(self, pg: SubmissionsPgRepo, mg: SubmissionsMongoRepo, ai: AIService):
         self.pg = pg
         self.mg = mg
         self.ai = ai
@@ -46,7 +45,6 @@ class SubmissionsService:
             payload_doc = await self.mg.find(sub.mongo_id)
 
         return SubmissionWithPayloadOut(
-            id=sub.id,
             uuid=sub.uuid,
             title=sub.title,
             language=sub.language,
@@ -62,7 +60,6 @@ class SubmissionsService:
         pg_submissions = await self.pg.find_all()
         return [
             SubmissionWithPayloadOut(
-                id=sub.id,
                 uuid=sub.uuid,
                 title=sub.title,
                 language=sub.language,

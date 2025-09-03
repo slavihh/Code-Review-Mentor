@@ -24,7 +24,6 @@ class SubmissionUpdate(BaseModel):
 
 
 class SubmissionWithPayloadOut(BaseModel):
-    id: int
     uuid: UUID
     title: str
     language: Language
@@ -37,7 +36,6 @@ class SubmissionWithPayloadOut(BaseModel):
 
 
 class SubmissionOut(BaseModel):
-    id: int
     uuid: UUID
     title: str
     language: Language

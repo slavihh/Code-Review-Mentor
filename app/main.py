@@ -1,10 +1,17 @@
-from fastapi import FastAPI
+import logging
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
 from app.core.db import Base, engine
 from app.api.submissions import router as submissions_router
 from app.api.ai import router as ai_router
+
+
+LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+logger = logging.getLogger("app")
 
 
 @asynccontextmanager
@@ -36,3 +43,12 @@ app.add_middleware(
 
 app.include_router(submissions_router)
 app.include_router(ai_router)
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception(f"Unhandled error at {request.url.path}")  # full traceback
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error"},
+    )
