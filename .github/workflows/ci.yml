@@ -73,7 +73,7 @@ jobs:
 
       - name: Run tests
         env:
-          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/test_db
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
           MONGO_URL: mongodb://localhost:27017/test_db
         run: |
           PYTHONPATH=. pytest --maxfail=1 --disable-warnings -q
