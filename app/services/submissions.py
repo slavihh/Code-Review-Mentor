@@ -12,7 +12,7 @@ from app.schemas.submissions import (
     SubmissionCreate,
     SubmissionOut,
 )
-from app.repositories.protocols import SubmissionsPGRepo, SubmissionsMongoRepo
+from app.repositories.protocols import SubmissionsPgRepo, SubmissionsMongoRepo
 from app.services.ai import AI as AIService
 from sqlalchemy.exc import SQLAlchemyError
 from pymongo.errors import PyMongoError
@@ -48,7 +48,7 @@ def build_submission_with_payload(
 
 
 class SubmissionsService:
-    def __init__(self, pg: SubmissionsPGRepo, mg: SubmissionsMongoRepo, ai: AIService):
+    def __init__(self, pg: SubmissionsPgRepo, mg: SubmissionsMongoRepo, ai: AIService):
         self.pg = pg
         self.mg = mg
         self.ai = ai
