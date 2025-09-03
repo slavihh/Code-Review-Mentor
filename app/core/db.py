@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from app.main import mongo_db
 import os
 
 DATABASE_URL: str = os.getenv(
@@ -27,10 +28,6 @@ class Base(DeclarativeBase):
     pass
 
 
-MONGO_URL: str = os.getenv("MONGO_URL", "mongodb://mongo:27017")
-MONGO_DB_NAME: str = os.getenv("MONGO_DB_NAME", "codereview")
-
-
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     engine = create_async_engine(DATABASE_URL, echo=True, future=True)
     async_session = async_sessionmaker(engine, expire_on_commit=False)
@@ -39,10 +36,5 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     await engine.dispose()
 
 
-mongo_client: AsyncIOMotorClient | None = None
-
 async def get_mongo_db() -> AsyncIOMotorDatabase:
-    global mongo_client
-    if mongo_client is None:
-        mongo_client = AsyncIOMotorClient(MONGO_URL)
-    return mongo_client[MONGO_DB_NAME]
+    return mongo_db
