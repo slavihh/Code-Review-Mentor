@@ -21,6 +21,7 @@ class FakePgSubmission:
         self.title = "test"
         self.language = Language.PYTHON
         self.mongo_id = mongo_id
+        self.short_feedback = "test"
         self.created_at = datetime.now(UTC)
         self.updated_at = datetime.now(UTC)
 
