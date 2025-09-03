@@ -48,7 +48,7 @@ mongo_db: AsyncIOMotorDatabase | None = None
 def init_mongo():
     global mongo_client, mongo_db
     mongo_client = AsyncIOMotorClient(MONGO_URL)
-    mongo_db = mongo_client[MONGO_DB_NAME]
+    mongo_db = mongo_client.get_database("codereview")
     logger.info("MongoDB initialized")
 
 
