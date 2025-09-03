@@ -55,4 +55,4 @@ async def create_submission(
 async def get_submissions(
     service: SubmissionsService = Depends(get_submissions_service),
 ):
-    return await service.getAll()
+    return await service.get_all()

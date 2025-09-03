@@ -90,7 +90,7 @@ async def test_get_all_submissions():
         ai=cast(AIService, AsyncMock(spec=AIService)),
     )
 
-    result = await service.getAll()
+    result = await service.get_all()
     assert len(result) == 2
     assert all(r.title == "test" for r in result)
 
