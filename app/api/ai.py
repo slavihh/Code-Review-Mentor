@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-from app.services.ai import get_ai, AI as AIService
+from app.core.di import GetAIService
 from app.schemas.ai import ReviewPayload
 
 router = APIRouter()
 
 
 @router.post("/review")
-async def review_code(data: ReviewPayload, service: AIService = Depends(get_ai)):
+async def review_code(data: ReviewPayload, service: GetAIService):
     return StreamingResponse(service.stream_feedback(data), media_type="text/plain")

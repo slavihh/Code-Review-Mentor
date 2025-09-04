@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from app.api import submissions
+from app.core.di import get_submissions_service
 from app.main import app as main_app
 
 
@@ -50,9 +50,7 @@ def override_service():
 
 
 def test_create_submission_valid(client, test_app):
-    test_app.dependency_overrides[submissions.get_submissions_service] = (
-        override_service
-    )
+    test_app.dependency_overrides[get_submissions_service] = override_service
     payload = {
         "title": "test",
         "language": "Python",
