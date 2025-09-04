@@ -1,6 +1,7 @@
 from typing import Optional, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from uuid import UUID
 from app.models.postgre import Submission, Language
 
@@ -41,8 +42,11 @@ class SubmissionsPgRepo:
             short_feedback=short_feedback,
             hash=code_hash,
         )
-        self.db.add(sub)
-        await self.db.commit()
-        await self.db.refresh(sub)
-
-        return sub
+        try:
+            self.db.add(sub)
+            await self.db.commit()
+            await self.db.refresh(sub)
+            return sub
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise
