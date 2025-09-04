@@ -15,8 +15,13 @@ DATABASE_URL: str = os.getenv(
     "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@db:5432/codereview"
 )
 
-
-engine: AsyncEngine = create_async_engine(DATABASE_URL, echo=True, future=True)
+engine: AsyncEngine = create_async_engine(
+    DATABASE_URL,
+    echo=True,
+    future=True,
+    pool_pre_ping=True,
+    pool_recycle=1800,
+)
 
 SessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
     bind=engine, expire_on_commit=False
@@ -33,7 +38,10 @@ MONGO_DB_NAME: str = os.getenv("MONGO_DB_NAME", "codereview")
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
-        yield session
+        try:
+            yield session
+        finally:
+            await session.close()
 
 
 mongo_client: AsyncIOMotorClient | None = None
