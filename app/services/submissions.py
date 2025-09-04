@@ -144,7 +144,7 @@ class SubmissionsService:
             mongo_id = await self.mg.insert(user_input, ai_text)
             logger.info(f"Inserted payload into MongoDB with id={mongo_id}")
         except PyMongoError:
-            logger.exception("Mongo insert failed — proceeding without Mongo reference")
+            logger.exception("Mongo insert failed — aborting request")
 
         if mongo_id:
             try:
@@ -160,6 +160,6 @@ class SubmissionsService:
                 logger.exception("Error occurred while creating submission")
                 raise HTTPException(500, "Error occurred")
         else:
-            raise HTTPException(500, "Error occurred")
+            raise HTTPException(500, "Error occurred while inserting in database")
 
         return build_submission_with_payload(sub, user_input, ai_text)

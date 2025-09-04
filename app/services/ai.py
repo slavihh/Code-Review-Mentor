@@ -4,7 +4,6 @@ from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
 )
-import os
 from app.schemas.submissions import SubmissionCreate
 from app.schemas.ai import ReviewPayload
 from openai import RateLimitError, APIError, APIConnectionError
@@ -108,10 +107,3 @@ class AI:
         except Exception as e:
             print(f"Unexpected error in stream_feedback: {e}")
             yield b"Unexpected error occurred."
-
-
-def get_ai() -> AI:
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise Exception(500, "OPENAI_API_KEY is not set on the server")
-    return AI(AsyncOpenAI(api_key=api_key))
